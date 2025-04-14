@@ -6,4 +6,15 @@ The data is parsed into a JSON format and printed out.
 1. Download all the necessary dependencies
 2. Create a .env file with these two attributes: EMAIL and PASSWORD.
 3. Swap out the LinkedIn URL with your desired URL of a page that has a projects section
-4. Add some code at the end to do whatever you desire with the JSON data!
+4. The JSON data is structured as follows:
+   projects:[
+     {
+       title: '',
+       date: '',
+       description: '',
+       skills: '',
+       img: ''
+     }
+
+   ]
+5. Be creative and do what you like with the JSON output!
