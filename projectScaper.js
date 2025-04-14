@@ -31,7 +31,7 @@ console.log("logging in");
 
 await page.click('[type="submit"]'),
 console.log("logged in");
-await delay(50000); // Wait for 30 seconds or adjust as needed
+//await delay(50000); // Wait for 30 seconds or adjust as needed
 
 
 await page.waitForNavigation(),
@@ -71,48 +71,75 @@ await page.waitForSelector('main[aria-label="Projects"]'); // waiting on next pa
 
 const main = await page.$('main[aria-label="Projects"]');
 
+await page.waitForSelector('ul'); // waiting on next page to load
+
+
 const cards = await main.$('ul'); //gets the html ul (projects) with all the li (cards)
 
 //Projects page has been opened up
 let json = {};
 json.projects = [];
 
-const projects = await cards.$$eval('li',x => {
+await cards.$$eval(':scope > li', listItems => {
+    return listItems
+        // .filter(card => {
+        //     const spans = card.querySelectorAll('span');
+        //     return spans.length > 0 && Array.from(spans).every(span => !span.classList.contains('visually-hidden'));
+        // })
+        .map(card => {
+            const jsonObj = {};
 
-    return x.filter(card => {
-                        const spans = card.querySelector('span'); // removes any text that is hidden
-                        return Array.from(spans).every(span => !span.classList.contains('visually-hidden'));
-                    }
-                    )
-            .map(card  => {
-            
-                const spans = card.quarySelectorAll('span');//get first span 
-                const jsonObj = {};
-                if(spans.length === 4){
-
-
-                    const title = card.quarySelectorAll('span')[0].innerText; //title
-                    const date = card.quarySelectorAll('span')[1].innerText; //date
-                    jsonObj.title = title;
-                    jsonObj.date = date;
+            const spans = card.querySelectorAll('span[aria-hidden="true"]');
+            if(spans.length > 1){
+                const title = spans[0]; //get first span 
+                if(title ){
+                    jsonObj.title = title.innerText.trim(); // title
 
                 }
-                const innerList = card.querySelectorAll('span');
-                if(innerList.length >= 1){
-                    const paragraph = innerList[0].innerText; //paragraph text
-                    const imagelink = innerList[2].innerText.querySelector('a'); //get the first a element and extract the image link
-                    jsonObj.paragraph = paragraph;
-                    jsonObj.img = imagelink;
+                const date = spans[1]; 
+                if(date){
+                    jsonObj.date = date.innerText.trim(); // title
 
                 }
-                json.projects.push(jsonObj);
-        
             }
-        
-        
-        );  // Extracts innerText from each li and trims it
 
-  });
+            const ul = card.querySelector('ul');
+            const project_card_sections = ul ? ul.querySelectorAll(':scope > li') : [];
+            const size = project_card_sections.length;
+
+
+            //Description section
+            if(size > 0){
+                const x = project_card_sections[0].querySelectorAll('span[aria-hidden="true"]');
+                if(x){
+                    jsonObj.description = Array.from(x).map(span => span.innerText.trim()).join(' ');
+                }
+            }
+
+
+            //skill section
+
+            if(size > 1){
+                const x = project_card_sections[1].querySelectorAll('span[aria-hidden="true"]');
+                if(x){
+                    jsonObj.skills = Array.from(x).map(span => span.innerText.trim()).join(' ');
+
+                }
+            }
+
+            //image section 
+            if(size > 2){
+                const anchor = card.querySelector('a');
+                if (anchor) {
+                    jsonObj.img = anchor.href;
+                }
+            }
+
+            return jsonObj;
+        });
+}).then(results => {
+    json.projects = results;
+});
 
 
 
@@ -121,3 +148,4 @@ console.log(json);  // Logs the filtered project sections
 
 
 browser.close();
+
